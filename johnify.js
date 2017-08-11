@@ -17,8 +17,10 @@ async function johnify(req, res) {
     var text = xss(query.text)
     const responseUrl = xss(query.response_url)
 
-    if (!text || text.length == 0 || !isWebUri(text) || !isImage(text)) {
-      text =  await GetRandomImageURL()
+    if (!text || text.length ==0) {
+      text =  await GetRandomImageURL();
+    } else if (!isWebUri(text) || !isImage(text)) {
+      text =  await GetRandomImageURL(text);
     }
   
     const { url, caption } = parseInput(text)
