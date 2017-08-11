@@ -9,35 +9,28 @@ const isImage = require('is-image')
 const dir = tmpdir()
 const { get } = require('request')
 
-module.exports = jokerify
+module.exports = johnify
 
-async function jokerify(req, res) {
+async function johnify(req, res) {
   try {
     const query = parse(req.url, true).query
     var text = xss(query.text)
     const responseUrl = xss(query.response_url)
 
-    if (!text || text.length ==0) {
-      text =  await GetRandomImageURL();
+    if (!text || text.length == 0 || !isWebUri(text) || !isImage(text)) {
+      text =  await GetRandomImageURL()
     }
-    else{
-      if (!isWebUri(text) || !isImage(text)) {
-        text =  await GetRandomImageURL(text);
-      }
-    }
-    
-    
-
+  
     const { url, caption } = parseInput(text)
     const id = uuid()
     const filename = `${id}.png`
     
-    const [ joker, canvas ] = await Promise.all([
-      getImage('./assets/joker-cropped.png'),
+    const [ john, canvas ] = await Promise.all([
+      getImage('./assets/young-john.png'),
       getImage(url)
     ])
   
-    const result = await compositeAndWrite({ canvas, joker, filename })
+    const result = await compositeAndWrite({ canvas, john, filename })
 
     if (result !== 'success') {
       throw result
@@ -69,13 +62,17 @@ async function GetRandomImageURL(search) {
     get(url, function(error, response, body) {
       try{
         var data = JSON.parse(body.replace(/\\'/g, "'"));
-        var image_src = data.items[Math.floor(Math.random() * data.items.length)]['media']['m'].replace("_m", "_b");
+        var image_src = data.items.length > 0 && data.items[Math.floor(Math.random() * data.items.length)]['media']['m'].replace("_m", "_b");
+        
+        if (!image_src) {
+          return resolve('https://s-media-cache-ak0.pinimg.com/736x/91/c2/f8/91c2f8931b4954ab41f665e88b1e1acf--paula-deen-happy-thanksgiving.jpg');
+        }
+
         return resolve(image_src);
       }
       catch(err){
         return resolve('https://s-media-cache-ak0.pinimg.com/736x/91/c2/f8/91c2f8931b4954ab41f665e88b1e1acf--paula-deen-happy-thanksgiving.jpg');
       }
-      
     })
   })
 }
@@ -89,7 +86,7 @@ function parseInput(input) {
   }
 }
 
-function compositeAndWrite({ canvas, joker, filename }) {
+function compositeAndWrite({ canvas, john, filename }) {
   return new Promise((resolve, reject) => {
     if (canvas.bitmap.width > 800) {
       canvas.resize(800, AUTO)
@@ -99,15 +96,15 @@ function compositeAndWrite({ canvas, joker, filename }) {
     const { height } = canvas.bitmap
     
     if(width<height)
-      joker.resize(width * 0.5, AUTO)
+      john.resize(width * 0.4, AUTO)
     else
-      joker.resize(AUTO, height * 0.5)
+      john.resize(AUTO, height * 0.6)
 
-    const jokerWidth = width - joker.bitmap.width
-    const jokerHeight = height - joker.bitmap.height
+    const johnWidth = width - john.bitmap.width
+    const johnHeight = height - john.bitmap.height
 
     canvas
-      .composite(joker, jokerWidth, jokerHeight)
+      .composite(john, johnWidth, johnHeight)
       .write(`${dir}/${filename}`, (err) => {
         if (err) {
           return reject(err)

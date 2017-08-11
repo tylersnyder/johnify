@@ -1,6 +1,6 @@
 const express = require('express')
 const app = express()
-const jokerify = require('./jokerify')
+const johnify = require('./johnify')
 const { tmpdir } = require('os')
 const root = tmpdir()
 const { post } = require('request')
@@ -9,7 +9,7 @@ app.use(express.static(root))
 
 app.get('/', async (req, res) => {
   try {
-    const result = await jokerify(req, res)
+    const result = await johnify(req, res)
     const { filename } = result.attachments[0]
     res.sendFile(filename, { root })
   } catch(err) {
@@ -26,7 +26,7 @@ app.get('/api/slack', async (req, res) => {
       text: 'working on it...'
     })
 
-    const result = await jokerify(req, res)
+    const result = await johnify(req, res)
     const { response_url } = result
 
     if (response_url) {
@@ -43,7 +43,8 @@ app.get('/api/slack', async (req, res) => {
       post(response_url, { json: payload })
     }
   } catch(err) {
-    console.log(err);
+    console.log(err)
+    
     res.status(200)
        .send({ text: err.message })
   }
